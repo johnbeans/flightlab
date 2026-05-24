@@ -1,25 +1,70 @@
-# FlightLab.UserMcp
+# FlightLab User MCP
 
-Public, user-scoped MCP server for reading FlightLab flights that the authenticated user can access.
+FlightLab User MCP is a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for FlightLab users. It lets MCP clients such as Cursor inspect and summarize the flights that the signed-in user can already access in FlightLab.
 
-This server intentionally has no admin API key support and does not call `/api/admin/*`.
+This is the public, user-scoped MCP server. It does not include admin tools.
 
-## Status
+## What It Can Do
 
-Initial read-only implementation.
+- List your visible FlightLab flights.
+- Fetch one visible flight by id.
+- Resolve FlightLab flight and FlightSet links.
+- Read FlightSet metadata and member summaries.
+- Analyze a FlightSet with simple summary statistics.
+- Compare flights in a FlightSet using metadata-level differences.
 
-## Configuration
+## Security Model
 
-Set:
+The server uses your normal FlightLab bearer token and calls the public FlightLab API. Flight ownership and access checks are enforced by FlightLab.
+
+This project intentionally has:
+
+- No admin API key support.
+- No calls to `/api/admin/*`.
+- No write tools.
+- No direct database access.
+
+Keep your bearer token private. Do not commit it to git, paste it into issues, or share it in screenshots.
+
+## Requirements
+
+- [.NET SDK 10.0](https://dotnet.microsoft.com/download) or newer.
+- A FlightLab account with access to flights.
+- An MCP client that can launch stdio servers, such as Cursor.
+
+## Install
+
+Clone the repository:
 
 ```bash
-FLIGHTLAB_API_BASE_URL=https://flightdataapi-production.up.railway.app
-FLIGHTLAB_ACCESS_TOKEN=your-user-flightlab-bearer-token
+git clone https://github.com/johnbeans/FlightLab.UserMcp.git
+cd FlightLab.UserMcp
+dotnet restore
 ```
 
-The token must be a normal FlightLab/Supabase user token. The FlightLab API enforces ownership and future sharing/group access.
+Run a quick build check:
 
-## MCP Configuration
+```bash
+dotnet build
+```
+
+## Get A FlightLab Access Token
+
+1. Sign in to [FlightLab](https://flightlab.jollylogic.com/app/).
+2. Open your browser developer console on a FlightLab app page.
+3. Run:
+
+```javascript
+window.FLIGHTLAB_GET_TOKEN().then(console.log)
+```
+
+4. Copy the printed token and use it as `FLIGHTLAB_ACCESS_TOKEN`.
+
+Tokens expire. If your MCP client starts getting `401` responses, repeat these steps and update the token in your MCP configuration.
+
+## Configure Cursor
+
+Add this MCP server to your Cursor MCP configuration:
 
 ```json
 {
@@ -32,29 +77,110 @@ The token must be a normal FlightLab/Supabase user token. The FlightLab API enfo
         "/path/to/FlightLab.UserMcp/FlightLab.UserMcp.csproj"
       ],
       "env": {
-        "FLIGHTLAB_API_BASE_URL": "https://flightdataapi-production.up.railway.app",
-        "FLIGHTLAB_ACCESS_TOKEN": "..."
+        "FLIGHTLAB_API_BASE_URL": "https://flights.jollylogic.com",
+        "FLIGHTLAB_ACCESS_TOKEN": "paste-your-flightlab-access-token-here"
       }
     }
   }
 }
 ```
 
+Restart or reload your MCP client after changing the configuration.
+
+## Environment Variables
+
+`FLIGHTLAB_ACCESS_TOKEN` is required. It must be a normal user-scoped FlightLab/Supabase bearer token.
+
+`FLIGHTLAB_API_BASE_URL` is optional and defaults to the production FlightLab API. For production use:
+
+```bash
+FLIGHTLAB_API_BASE_URL=https://flights.jollylogic.com
+```
+
 ## Tools
 
-- `flightlab_list_flights`
-- `flightlab_get_flight`
-- `flightlab_resolve_reference`
-- `flightlab_get_flight_set`
-- `flightlab_get_flight_set_members`
-- `flightlab_analyze_flight_set`
-- `flightlab_compare_flight_set`
+### `flightlab_list_flights`
 
-## Security Boundary
+Lists flights visible to the authenticated user.
 
-This project should remain publishable and safe to review publicly:
+Arguments:
 
-- no admin endpoints
-- no admin keys
-- no write tools
-- no direct database access
+- `top`: maximum flights to return, capped at 200. Defaults to 50.
+- `skip`: number of flights to skip. Defaults to 0.
+- `mode`: optional numeric FlightLab mode filter.
+- `includeDeleted`: include soft-deleted flights. Defaults to false.
+
+### `flightlab_get_flight`
+
+Gets one visible flight by FlightLab flight id.
+
+Arguments:
+
+- `flightId`: FlightLab flight id.
+
+### `flightlab_resolve_reference`
+
+Resolves a FlightLab flight or FlightSet link visible to the user.
+
+Arguments:
+
+- `url`: FlightLab link or FlightSet id.
+
+### `flightlab_get_flight_set`
+
+Gets metadata for a visible FlightSet.
+
+Arguments:
+
+- `setId`: FlightSet id.
+
+### `flightlab_get_flight_set_members`
+
+Gets visible member summaries for a FlightSet.
+
+Arguments:
+
+- `setId`: FlightSet id.
+
+### `flightlab_analyze_flight_set`
+
+Returns summary statistics for a FlightSet, including flight count, mode counts, apogee range, and duration range.
+
+Arguments:
+
+- `setId`: FlightSet id.
+
+### `flightlab_compare_flight_set`
+
+Returns a metadata-level comparison of flights in a FlightSet, ordered by apogee.
+
+Arguments:
+
+- `setId`: FlightSet id.
+
+## Example Prompts
+
+After configuring the MCP server, try prompts like:
+
+- "List my latest FlightLab flights."
+- "Analyze this FlightLab set: `https://flightlab.jollylogic.com/app/set.html?id=...`"
+- "Compare the flights in FlightSet `...` by apogee and duration."
+- "Get details for FlightLab flight `...`."
+
+## Troubleshooting
+
+`FLIGHTLAB_ACCESS_TOKEN is required`
+
+Set `FLIGHTLAB_ACCESS_TOKEN` in the MCP server environment.
+
+`401`
+
+Your token is missing, expired, or invalid. Sign in to FlightLab again and copy a fresh token.
+
+`404`
+
+The requested flight or FlightSet does not exist or is not visible to the authenticated user.
+
+`dotnet: command not found`
+
+Install the .NET SDK and make sure `dotnet` is available on your PATH.
