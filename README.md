@@ -1,6 +1,6 @@
 # flightlab
 
-`flightlab` is a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for FlightLab users. It lets MCP clients such as Cursor inspect and summarize the flights that the signed-in user can already access in FlightLab.
+`flightlab` is a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for FlightLab users. It lets AI assistants and MCP clients, such as ChatGPT, Claude, Grok, etc., read and analyze your flights.
 
 This is the public, user-scoped MCP server. It does not include admin tools.
 
@@ -17,7 +17,7 @@ This is the public, user-scoped MCP server. It does not include admin tools.
 
 The server uses your normal FlightLab bearer token and calls the public FlightLab API. Flight ownership and access checks are enforced by FlightLab.
 
-You do not enter your email address into the MCP server. Instead, sign in to FlightLab with the email address that owns or can access the flights, then give the MCP server the access token from that signed-in session.
+You do not enter your email address into the MCP server. Instead, sign in to FlightLab with the email address that owns or can access the flights, then give the MCP server the access token from that signed-in session. That token lets your AI read and analyze your flights.
 
 This project intentionally has:
 
