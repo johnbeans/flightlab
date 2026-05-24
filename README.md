@@ -50,21 +50,16 @@ Run a quick build check:
 dotnet build
 ```
 
-## Get A FlightLab Access Token
+## Connect FlightLab To Your AI
 
 1. Sign in to [FlightLab](https://flightlab.jollylogic.com/app/) using the email address that owns or can access your flights.
-2. Open your browser developer console on a FlightLab app page.
-3. Run:
+2. Open Settings.
+3. Find **Connect AI**.
+4. Choose **Copy setup instructions** and paste them into ChatGPT, Claude, Grok, etc.
 
-```javascript
-window.FLIGHTLAB_GET_TOKEN().then(console.log)
-```
+The copied setup includes a private FlightLab access token. That token identifies your FlightLab account and lets your AI read and analyze your flights. The MCP server does not need a separate email setting.
 
-4. Copy the printed token and use it as `FLIGHTLAB_ACCESS_TOKEN`.
-
-The token identifies your FlightLab account. The MCP server does not need a separate email setting.
-
-Tokens expire. If your MCP client starts getting `401` responses, repeat these steps and update the token in your MCP configuration.
+Tokens expire. If your MCP client starts getting `401` responses, sign in to FlightLab again and copy fresh setup instructions from Settings.
 
 ## Configure Cursor
 
