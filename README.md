@@ -1,6 +1,6 @@
-# FlightLab User MCP
+# flightlab
 
-FlightLab User MCP is a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for FlightLab users. It lets MCP clients such as Cursor inspect and summarize the flights that the signed-in user can already access in FlightLab.
+`flightlab` is a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server for FlightLab users. It lets MCP clients such as Cursor inspect and summarize the flights that the signed-in user can already access in FlightLab.
 
 This is the public, user-scoped MCP server. It does not include admin tools.
 
@@ -37,8 +37,8 @@ Keep your bearer token private. Do not commit it to git, paste it into issues, o
 Clone the repository:
 
 ```bash
-git clone https://github.com/johnbeans/FlightLab.UserMcp.git
-cd FlightLab.UserMcp
+git clone https://github.com/johnbeans/flightlab.git
+cd flightlab
 dotnet restore
 ```
 
@@ -74,7 +74,7 @@ Add this MCP server to your Cursor MCP configuration:
       "args": [
         "run",
         "--project",
-        "/path/to/FlightLab.UserMcp/FlightLab.UserMcp.csproj"
+        "/path/to/flightlab/FlightLab.UserMcp.csproj"
       ],
       "env": {
         "FLIGHTLAB_API_BASE_URL": "https://flights.jollylogic.com",
