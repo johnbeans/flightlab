@@ -17,6 +17,8 @@ This is the public, user-scoped MCP server. It does not include admin tools.
 
 The server uses your normal FlightLab bearer token and calls the public FlightLab API. Flight ownership and access checks are enforced by FlightLab.
 
+You do not enter your email address into the MCP server. Instead, sign in to FlightLab with the email address that owns or can access the flights, then give the MCP server the access token from that signed-in session.
+
 This project intentionally has:
 
 - No admin API key support.
@@ -29,7 +31,7 @@ Keep your bearer token private. Do not commit it to git, paste it into issues, o
 ## Requirements
 
 - [.NET SDK 10.0](https://dotnet.microsoft.com/download) or newer.
-- A FlightLab account with access to flights.
+- A FlightLab account, signed in with the email address that owns or can access the flights you want to analyze.
 - An MCP client that can launch stdio servers, such as Cursor.
 
 ## Install
@@ -50,7 +52,7 @@ dotnet build
 
 ## Get A FlightLab Access Token
 
-1. Sign in to [FlightLab](https://flightlab.jollylogic.com/app/).
+1. Sign in to [FlightLab](https://flightlab.jollylogic.com/app/) using the email address that owns or can access your flights.
 2. Open your browser developer console on a FlightLab app page.
 3. Run:
 
@@ -59,6 +61,8 @@ window.FLIGHTLAB_GET_TOKEN().then(console.log)
 ```
 
 4. Copy the printed token and use it as `FLIGHTLAB_ACCESS_TOKEN`.
+
+The token identifies your FlightLab account. The MCP server does not need a separate email setting.
 
 Tokens expire. If your MCP client starts getting `401` responses, repeat these steps and update the token in your MCP configuration.
 
