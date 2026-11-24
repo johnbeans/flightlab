@@ -140,12 +140,12 @@ async Task<JsonNode> CallToolAsync(JsonObject? parameters)
         var name = parameters?["name"]?.GetValue<string>() ?? throw new FlightLabApiException(400, "bad_request", "Tool name is required.", "Call a named FlightLab MCP tool.");
         var args = parameters["arguments"] as JsonObject ?? new JsonObject();
         if (string.IsNullOrWhiteSpace(accessToken) && name != "flightlab_list_modes")
-            throw new FlightLabApiException(401, "token_expired", "FLIGHTLAB_ACCESS_TOKEN is required.", "Ask the user to open FlightLab Settings > Connect AI and copy fresh setup instructions.");
+            throw new FlightLabApiException(401, "token_expired", "FLIGHTLAB_ACCESS_TOKEN is required.", "Ask the user to open FlightLab Settings > Connect AI for Developers and copy fresh setup instructions.");
 
         object result = name switch
         {
             "flightlab_list_flights" => await ListFlightsAsync(args),
-            "flightlab_get_flight" => await GetAsync($"/tables/flight/{Uri.EscapeDataString(GetString(args, "flightId"))}"),
+            "flightlab_get_flight" => EnrichFlightNode(await GetAsync($"/tables/flight/{Uri.EscapeDataString(GetString(args, "flightId"))}")),
             "flightlab_get_flight_samples" => await GetFlightSamplesAsync(args),
             "flightlab_list_modes" => ListModes(),
             "flightlab_resolve_reference" => await ResolveReferenceAsync(GetString(args, "url")),
@@ -251,8 +251,28 @@ async Task<JsonNode> ResolveReferenceAsync(string url)
         return JsonSerializer.SerializeToNode(new { type = "flightSet", set, members }, jsonOptions)!;
     }
 
-    var flight = await GetAsync($"/tables/flight/{Uri.EscapeDataString(reference.Id)}");
+    var flight = EnrichFlightNode(await GetAsync($"/tables/flight/{Uri.EscapeDataString(reference.Id)}"));
     return JsonSerializer.SerializeToNode(new { type = "flight", flight }, jsonOptions)!;
+}
+
+JsonNode EnrichFlightNode(JsonNode node)
+{
+    if (node is JsonObject obj
+        && obj["isMultiStage"]?.GetValue<bool>() == true
+        && obj["multiStageAnalysisJson"]?.GetValue<string>() is { Length: > 0 } rawJson)
+    {
+        try
+        {
+            var parsed = JsonNode.Parse(rawJson);
+            if (parsed is not null)
+                obj["multiStage"] = parsed;
+        }
+        catch
+        {
+            // Leave raw JSON untouched if malformed.
+        }
+    }
+    return node;
 }
 
 async Task<JsonNode> GetSetMembersAsync(string setId) =>
@@ -325,7 +345,7 @@ FlightLabApiException CreateApiException(HttpStatusCode statusCode, string body)
     var message = ExtractErrorMessage(body);
     return statusCode switch
     {
-        HttpStatusCode.Unauthorized => new FlightLabApiException(status, "token_expired", string.IsNullOrWhiteSpace(message) ? "FlightLab access token is missing, invalid, or expired." : message, "Ask the user to open FlightLab Settings > Connect AI and copy fresh setup instructions."),
+        HttpStatusCode.Unauthorized => new FlightLabApiException(status, "token_expired", string.IsNullOrWhiteSpace(message) ? "FlightLab access token is missing, invalid, or expired." : message, "Ask the user to open FlightLab Settings > Connect AI for Developers and copy fresh setup instructions."),
         HttpStatusCode.Forbidden when message.Contains("RequiresSubscription", StringComparison.OrdinalIgnoreCase) => new FlightLabApiException(status, "requires_subscription", "This FlightLab account needs an active subscription to access flight data.", "Ask the user to check their FlightLab subscription."),
         HttpStatusCode.Forbidden => new FlightLabApiException(status, "unauthorized", string.IsNullOrWhiteSpace(message) ? "This FlightLab account is not authorized for that request." : message, "Ask the user to sign in with the FlightLab email that owns or can access the flights."),
         HttpStatusCode.NotFound => new FlightLabApiException(status, "not_found_or_no_access", string.IsNullOrWhiteSpace(message) ? "The flight or FlightSet was not found, or this account cannot access it." : message, "Check the id/link and make sure the user signed in with the FlightLab account that owns or can access it."),
